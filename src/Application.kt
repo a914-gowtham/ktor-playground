@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.repository.DatabaseFactory
 import io.ktor.application.*
 import io.ktor.response.*
 import io.ktor.request.*
@@ -15,6 +16,8 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
+
+    DatabaseFactory.init()
     install(Sessions) {
         cookie<MySession>("MY_SESSION") {
             cookie.extensions["SameSite"] = "lax"
@@ -44,6 +47,12 @@ fun Application.module(testing: Boolean = false) {
             call.respond("Note retrieved $id by path parameter")
         }
 
+        /*
+     postgres=# CREATE USER tecmint WITH PASSWORD 'securep@wd';
+postgres=# CREATE DATABASE tecmintdb;
+postgres=# GRANT ALL PRIVILEGES ON DATABASE tecmintdb to tecmint;
+postgres=# \q
+     * */
         get("/note"){
             val id= call.request.queryParameters["id"]
             call.respond("Note retrieved $id by query parameter")
