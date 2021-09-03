@@ -1,5 +1,8 @@
 package com.example
 
+import com.example.auth.JwtService
+import com.example.auth.hash
+import com.example.db.model.User
 import com.example.repository.DatabaseFactory
 import io.ktor.application.*
 import io.ktor.response.*
@@ -18,6 +21,8 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 fun Application.module(testing: Boolean = false) {
 
     DatabaseFactory.init()
+    val jwtService= JwtService()
+    val hashFunction= { s:String-> hash(s)}
     install(Sessions) {
         cookie<MySession>("MY_SESSION") {
             cookie.extensions["SameSite"] = "lax"
@@ -35,6 +40,14 @@ fun Application.module(testing: Boolean = false) {
     routing {
         get("/") {
             call.respondText("HELLO WORLD!", contentType = ContentType.Text.Plain)
+        }
+
+        get("/token") {
+           val email= call.request.queryParameters["email"]
+            val password= call.request.queryParameters["password"]
+            val userName= call.request.queryParameters["username"]
+            val user = User(email!!, hashFunction(password!!), userName!!)
+            call.respond(jwtService.generateToken(user))
         }
 
         get("/notes"){
