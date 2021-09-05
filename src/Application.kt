@@ -2,8 +2,12 @@ package com.example
 
 import com.example.auth.JwtService
 import com.example.auth.hash
+import com.example.db.daos.NoteDao
+import com.example.db.daos.UserDao
 import com.example.db.model.User
 import com.example.repository.DatabaseFactory
+import com.example.routes.NoteRoutes
+import com.example.routes.UserRoutes
 import io.ktor.application.*
 import io.ktor.response.*
 import io.ktor.request.*
@@ -11,8 +15,10 @@ import io.ktor.routing.*
 import io.ktor.http.*
 import io.ktor.sessions.*
 import io.ktor.auth.*
+import io.ktor.auth.jwt.*
 import io.ktor.gson.*
 import io.ktor.features.*
+import io.ktor.locations.*
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
@@ -21,6 +27,8 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 fun Application.module(testing: Boolean = false) {
 
     DatabaseFactory.init()
+    val userDao= UserDao()
+    val noteDao= NoteDao()
     val jwtService= JwtService()
     val hashFunction= { s:String-> hash(s)}
     install(Sessions) {
@@ -30,7 +38,19 @@ fun Application.module(testing: Boolean = false) {
     }
 
     install(Authentication) {
+        jwt("jwt"){
+            verifier(jwtService.verifier)
+            realm= "Note Server"
+            validate {
+                val payload=it.payload
+                val email= payload.getClaim("email").asString()
+                val user= userDao.getUserByEmail(email)
+                user
+            }
+        }
     }
+
+    install(Locations)
 
     install(ContentNegotiation) {
         gson {
@@ -42,6 +62,8 @@ fun Application.module(testing: Boolean = false) {
             call.respondText("HELLO WORLD!", contentType = ContentType.Text.Plain)
         }
 
+        UserRoutes(userDao, jwtService, hashFunction)
+        NoteRoutes(noteDao,hashFunction)
         get("/token") {
            val email= call.request.queryParameters["email"]
             val password= call.request.queryParameters["password"]

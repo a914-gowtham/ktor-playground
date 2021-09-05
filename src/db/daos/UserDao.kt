@@ -1,6 +1,6 @@
 package com.example.db.daos
 
-import com.example.db.UserTable
+import com.example.db.tables.UserTable
 import com.example.db.model.User
 import com.example.repository.DatabaseFactory.dbQuery
 import org.jetbrains.exposed.sql.ResultRow
@@ -19,8 +19,8 @@ class UserDao {
         }
     }
 
-    suspend fun getUserByEmail(email: String) {
-        dbQuery {
+    suspend fun getUserByEmail(email: String): User? {
+        return dbQuery {
             UserTable.select {
                 UserTable.email.eq(email)
             }.map { mapRowToUser(it) }.singleOrNull()

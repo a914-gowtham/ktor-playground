@@ -1,6 +1,7 @@
 package com.example.repository
 
-import com.example.db.UserTable
+import com.example.db.tables.NoteTable
+import com.example.db.tables.UserTable
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +17,7 @@ object DatabaseFactory {
 
       transaction {
           SchemaUtils.create(UserTable)
+          SchemaUtils.create(NoteTable)
       }
     }
 
